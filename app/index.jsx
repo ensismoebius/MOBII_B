@@ -17,6 +17,10 @@ export default function Index() {
       <Button
         title="Verificação de CEP"
         onPress={() => roteador.push("./cep")}
+      />      
+      <Button
+        title="Banco de dados local"
+        onPress={() => roteador.push("./banco")}
       />
     </View>
   );
