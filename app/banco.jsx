@@ -19,25 +19,47 @@ export default function Banco() {
     // exista e tenha a tabela que esperadmos
     useEffect(() => {
         db.execSync("CREATE TABLE IF NOT EXISTS dados (id INTEGER PRIMARY KEY AUTOINCREMENT, valor TEXT);");
-        carregarDados();
+        carregarItems();
     }, []);
 
 
-    function carregarDados() {
-        db.getAllAsync("SELECT * FROM dados").then(
-            (resultado) => {
-                setDados(resultado);
+    function inserirItem(){
+        // Se o valor digitado contiver apenas espaços
+        // então pára a função. O comando "trim()" remove
+        // os espaços em excesso no inicio e fim da expressão
+        if(!valor.trim()){
+            // Não há nada para salvar!
+            return;
+        }
+
+        // Se houver algor para salvar então executa o insert na base de dados
+        db.runAsync("insert into dados (valor) values (?);", [valor]).then(
+            () => {
+                // Avisa que a inserção foi terminada
+                console.log("Inserção terminada")
             }
-        );
+        )
+    }
+
+
+    function carregarItems(){
+        db.getAllAsync("select * from dados;").then(
+            (linhas) => {
+                setDados(linhas)
+            }
+        )
     }
 
 
     function salvarDado() {
         // Adiciona o novo valor à lista de dados
         setDados([...dados, valor]);
+
+        // Salva o valor no banco de dados local
+        inserirItem();
+
         // Limpa o campo de texto
         setValor("");
-        carregarDados();
     }
 
 
@@ -59,11 +81,11 @@ export default function Banco() {
                 <FlatList
                     data={dados}
                     keyExtractor={
-                        (item, index) => index.toString()
+                        (item) => item.id.toString()
                     }
                     renderItem={
                         ({ item }) =>
-                            <Text>{item}</Text>
+                            <Text>{item.valor}</Text>
                     }
                 />
             </View>
