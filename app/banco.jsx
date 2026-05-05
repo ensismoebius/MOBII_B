@@ -19,7 +19,17 @@ export default function Banco() {
     // exista e tenha a tabela que esperadmos
     useEffect(() => {
         db.execSync("CREATE TABLE IF NOT EXISTS dados (id INTEGER PRIMARY KEY AUTOINCREMENT, valor TEXT);");
+        carregarDados();
     }, []);
+
+
+    function carregarDados() {
+        db.getAllAsync("SELECT * FROM dados").then(
+            (resultado) => {
+                setDados(resultado);
+            }
+        );
+    }
 
 
     function salvarDado() {
@@ -27,6 +37,7 @@ export default function Banco() {
         setDados([...dados, valor]);
         // Limpa o campo de texto
         setValor("");
+        carregarDados();
     }
 
 
