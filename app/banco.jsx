@@ -14,6 +14,9 @@ export default function Banco() {
     // Guarda o valor do digitado no TextInput
     const [valor, setValor] = useState("");
 
+    // Informar se o app está em mode de edição
+    const [editando, setEditando] = useState(false);
+
     // Cria a tabela "dados" caso ela não exista
     // Isso é necessário para garantir que a base de dados
     // exista e tenha a tabela que esperadmos
@@ -49,8 +52,7 @@ export default function Banco() {
             }
         )
     }
-
-
+    
     function salvarDado() {
         // Adiciona o novo valor à lista de dados
         setDados([...dados, valor]);
@@ -62,6 +64,18 @@ export default function Banco() {
         setValor("");
     }
 
+    function atualizaDados(id, { valor }){
+        db.runAsync("update dados set valor = ? where id =?", 
+            [ valor, id ]
+        ).then(
+            carregarItems()
+        )
+    }
+
+    function iniciarEdicao(item){
+        setValor(item.valor)
+        setEditando(true)
+    }
 
     return (
         <View>
@@ -72,7 +86,7 @@ export default function Banco() {
                 onChangeText={setValor}
             />
             <Button
-                title="Salvar"
+                title={editando ? "Atualizar" : "Salvar"}
                 onPress={salvarDado}
             />
             <Text>Dados salvos aparecerão aqui</Text>
@@ -84,8 +98,17 @@ export default function Banco() {
                         (item) => item.id.toString()
                     }
                     renderItem={
-                        ({ item }) =>
-                            <Text>{item.valor}</Text>
+                        ({ item }) => (
+                            <>
+                                <Text>{item.valor}</Text>
+                                <Button 
+                                    title="Editar"
+                                    onPress={
+                                        () => iniciarEdicao(item)
+                                    }
+                                />
+                            </>
+                        )
                     }
                 />
             </View>
