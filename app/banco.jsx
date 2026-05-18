@@ -5,17 +5,27 @@ import { Button, FlatList, Text, TextInput, View } from "react-native";
 
 export default function Banco() {
 
-    // Abre uma conexão com a base de dados sqlite
+    // Abre uma conexão com a base de dados sqlite.
+    // Se o arquivo "banco.db" não existir esta linha o cria,
+    // senão ele é aberto automaticamente
     const db = SQLite.openDatabaseSync("banco.db");
 
-    // Guarda os dados em um estado local
+    // Guarda os dados em um estado local no formato json
+    // nesse caso, como a tabela tem os campos "id" e "valor"
+    // o objeto será ne seguinte formato {id: <id>, valor: "<texto>"}
     const [dados, setDados] = useState([]);
 
     // Guarda o valor do digitado no TextInput
     const [valor, setValor] = useState("");
 
-    // Informar se o app está em mode de edição
+    // Informa se o app está em mode de edição
     const [editando, setEditando] = useState(false);
+
+    // Informa o id do objeto que está sendo editado.
+    // Iniciamos o estado com zero pois no banco de dados
+    // relacional não há registros identificados com "0",
+    // sendo assim, "0" significa que nada está sendo editado
+    const [idSendoEditado, setIdSendoEditado ] = useState(0);
 
     // Cria a tabela "dados" caso ela não exista
     // Isso é necessário para garantir que a base de dados
@@ -26,11 +36,11 @@ export default function Banco() {
     }, []);
 
 
-    function inserirItem(){
+    function inserirItem() {
         // Se o valor digitado contiver apenas espaços
         // então pára a função. O comando "trim()" remove
         // os espaços em excesso no inicio e fim da expressão
-        if(!valor.trim()){
+        if (!valor.trim()) {
             // Não há nada para salvar!
             return;
         }
@@ -45,36 +55,37 @@ export default function Banco() {
     }
 
 
-    function carregarItems(){
+    function carregarItems() {
         db.getAllAsync("select * from dados;").then(
             (linhas) => {
                 setDados(linhas)
             }
         )
     }
-    
-    function salvarDado() {
-        // Adiciona o novo valor à lista de dados
-        setDados([...dados, valor]);
 
+    function salvarDado() {
         // Salva o valor no banco de dados local
         inserirItem();
+
+        // Carrega os dados para dentro do estado
+        carregarItems();
 
         // Limpa o campo de texto
         setValor("");
     }
 
-    function atualizaDados(id, { valor }){
-        db.runAsync("update dados set valor = ? where id =?", 
-            [ valor, id ]
+    function atualizaDados(id, valor) {
+        db.runAsync("update dados set valor = ? where id =?",
+            [valor, id]
         ).then(
             carregarItems()
         )
     }
 
-    function iniciarEdicao(item){
-        setValor(item.valor)
+    function iniciarEdicao(item) {
         setEditando(true)
+        setValor(item.valor)
+        setIdSendoEditado(item.id)
     }
 
     return (
@@ -87,7 +98,18 @@ export default function Banco() {
             />
             <Button
                 title={editando ? "Atualizar" : "Salvar"}
-                onPress={salvarDado}
+                onPress={
+                    () => {
+                        if(editando){
+                            atualizaDados(idSendoEditado, valor);
+                            setIdSendoEditado(0);
+                            setEditando(false);
+                            setValor("");
+                        }else{
+                            salvarDado();
+                        }
+                    }
+                }
             />
             <Text>Dados salvos aparecerão aqui</Text>
             <View>
@@ -101,7 +123,7 @@ export default function Banco() {
                         ({ item }) => (
                             <>
                                 <Text>{item.valor}</Text>
-                                <Button 
+                                <Button
                                     title="Editar"
                                     onPress={
                                         () => iniciarEdicao(item)
